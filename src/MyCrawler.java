@@ -19,7 +19,7 @@ import com.google.gson.Gson;
 public class MyCrawler {
 	private int depthLimit;
 	Queue<MyUrl> links = new LinkedList<MyUrl>();
-	File dbFile = new File("/home/duong/Desktop/crawldata/crawl.dat");
+	File dbFile = new File("output/crawl.dat");
 	ConcurrentNavigableMap<String, String> pagesData;
 	DB db;
 	Gson gson = new Gson();

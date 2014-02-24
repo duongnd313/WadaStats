@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentNavigableMap;
 
-import jvntextpro.JVnTextPro;
-
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 
@@ -21,49 +19,40 @@ import com.google.gson.Gson;
  * Hello world application to demonstrate storage open, commit and close
  * operations
  */
+
 public class TrendDetection {
-	File dbCrawlFile = new File("/home/duong/Desktop/crawldata/crawl.dat");
-	File dbStatsFile = new File("/home/duong/Desktop/crawldata/stats.dat");
+	File dbCrawlFile = new File("output/crawl.dat");
+	File dbStatsFile = new File("output/stats.dat");
 	DB dbStats;
 	Gson gson = new Gson();
 	SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
 	public static void main(String[] args) throws IOException {
 		TrendDetection t = new TrendDetection();
+//		t.crawl();
+		// Remember to delete old data file to prevent error
 //		t.countWord();
-		String example = "Nếu bạn đang tìm kiếm một chiếc điện thoại Android? Đây là, những smartphone đáng để bạn cân nhắc nhất. Thử linh tinh!";
- 
-		WordTokenizer token = new WordTokenizer("models/jvnsensegmenter", "data", true);
-		token.setString(example);
-		System.out.println(token.getString());
-		
-		
+//		t.closeStorage();
+		 t.debugStore();
 	}
 
 	public void countWord() {
 		iniStorage();
-		JVnTextPro textPro = new JVnTextPro();
-		textPro.initSenSegmenter("models/jvnsensegmenter");
-		textPro.initSenTokenization();
-		textPro.initSegmenter("models/jvnsegmenter");
-		textPro.initPosTagger("models/jvnpostag/maxent");
+		WordTokenizer token = new WordTokenizer("models/jvnsensegmenter",
+				"data", true);
 		String example = "Nếu bạn đang tìm kiếm một chiếc điện thoại Android? Đây là, những smartphone đáng để bạn cân nhắc nhất. Thử linh tinh!";
-		System.out.println(textPro.senSegment(example));
-		System.out.println(textPro.senTokenize(example));
-		System.out.println(textPro.wordSegment(example));
-		System.out.println(textPro.posTagging(example));
-		System.out.println(textPro.wordSegment(textPro.senTokenize(textPro
-				.senSegment(example))));
+		token.setString(example);
+		System.out.println(token.getString());
 
 		Set<Map.Entry<String, String>> crawlData = getCrawlData().entrySet();
 		Iterator<Map.Entry<String, String>> i = crawlData.iterator();
 		while (i.hasNext()) {
 			Map.Entry<String, String> pageContent = i.next();
+			System.out.println(pageContent.getKey());
 			PageData pageData = gson.fromJson(pageContent.getValue(),
 					PageData.class);
-			String wordSegment = textPro.wordSegment(
-					textPro.senTokenize(textPro.senSegment(pageData
-							.getContent()))).toUpperCase();
+			token.setString(pageData.getContent().toUpperCase());
+			String wordSegment = token.getString();
 			String[] listWord = wordSegment.split(" ");
 			for (String word : listWord) {
 				addToDictionary(word, 1);
@@ -79,7 +68,6 @@ public class TrendDetection {
 				addToStatByDay(date, word, 1);
 			}
 		}
-		debugStore();
 	}
 
 	public void iniStorage() {
@@ -99,13 +87,11 @@ public class TrendDetection {
 		System.out.println(listVocabulary.containsKey("CHO"));
 		System.out.println(listVocabulary.get("CHO"));
 
-		String s = "voca2";
+		String s = "24/02/2014";
 		System.out.println("get Day " + s);
-		ConcurrentNavigableMap<String, String> words = dbStats
-				.getTreeMap("test");
-		System.out.println(words);
-		System.out.println(words.containsKey("a"));
-		System.out.println(words.get("b"));
+		ConcurrentNavigableMap<String, String> words = dbStats.getTreeMap(s);
+		System.out.println(words.containsKey("CHO"));
+		System.out.println(words.get("CHO"));
 	}
 
 	public void crawl() {
@@ -114,9 +100,7 @@ public class TrendDetection {
 	}
 
 	public ConcurrentNavigableMap<String, String> getCrawlData() {
-		DB db = DBMaker.newFileDB(dbCrawlFile).closeOnJvmShutdown()
-		// .encryptionEnable("password")
-				.make();
+		DB db = DBMaker.newFileDB(dbCrawlFile).closeOnJvmShutdown().make();
 		return db.getTreeMap("WadaTechData");
 	}
 
@@ -137,7 +121,7 @@ public class TrendDetection {
 	public void addToStatByDay(Date date, String word, int n) {
 		String collection = simpleDateFormat.format(date);
 		ConcurrentNavigableMap<String, String> listVocabulary = dbStats
-				.getTreeMap("voca2");
+				.getTreeMap(collection);
 		String strTimes = listVocabulary.get(word);
 		int times = 0;
 		if (strTimes != null) {
@@ -148,28 +132,4 @@ public class TrendDetection {
 		}
 		listVocabulary.put(word, Integer.toString(times));
 	}
-
-	public void setData() {
-		// DB db = DBMaker.newFileDB(dbFile).closeOnJvmShutdown()
-		// .make();
-		//
-		// // open an collection, TreeMap has better performance then HashMap
-		// ConcurrentNavigableMap<String, String> map = db
-		// .getTreeMap("collectionName");
-		//
-		// map.put(1, "one");
-		// map.put(2, "two");
-		// // map.keySet() is now [1,2] even before commit
-		//
-		// db.commit(); // persist changes into disk
-		//
-		// map.put(3, "three");
-		// // map.keySet() is now [1,2,3]
-		// db.rollback(); // revert recent changes
-		// // map.keySet() is now [1,2]
-		//
-		// db.close();
-
-	}
-
 }
