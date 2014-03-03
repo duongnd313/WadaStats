@@ -16,6 +16,11 @@ import org.mapdb.DBMaker;
 
 import com.google.gson.Gson;
 
+/**
+ * Crawl Data from wada
+ * @author duong
+ * 
+ */
 public class MyCrawler {
 	private int depthLimit;
 	Queue<MyUrl> links = new LinkedList<MyUrl>();
@@ -24,7 +29,13 @@ public class MyCrawler {
 	DB db;
 	Gson gson = new Gson();
 
-	public void startCrawl(String url, int depth) {
+	/**
+	 * Crawl data and store in output/crawl.dat
+	 * @param url
+	 * @param depth
+	 * @param nitem_limit
+	 */
+	public void startCrawl(String url, int depth, int nitem_limit) {
 		System.out.println("Craw: url=" + url + " depth: " + depth);
 		iniStorage();
 		depthLimit = depth;
@@ -32,7 +43,6 @@ public class MyCrawler {
 		PageData pageData;
 		int nItem = 0;
 		int nList = 0;
-		int nitem_limit = 20;
 		while (nItem < nitem_limit) {
 			pageData = getContent(currentUrl);
 			if (!isNew(pageData)) {
@@ -63,6 +73,9 @@ public class MyCrawler {
 		System.out.println("Finish");
 	}
 
+	/**
+	 * ini Storage
+	 */
 	private void iniStorage() {
 		db = DBMaker.newFileDB(dbFile).closeOnJvmShutdown()
 		// .encryptionEnable("password")
@@ -70,11 +83,18 @@ public class MyCrawler {
 		pagesData = db.getTreeMap("WadaTechData");
 	}
 
+	/**
+	 * close Storage after write data
+	 */
 	private void closeStorage() {
 		db.commit();
 		db.close();
 	}
 
+	/**
+	 * Store pageData in database
+	 * @param pageData
+	 */
 	private void storePageData(PageData pageData) {
 		// TODO Auto-generated method stub
 		if (pageData != null) {
@@ -176,7 +196,7 @@ public class MyCrawler {
 		SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
 				"dd/MM/yyyy HH:mm");
 		try {
-			Date outDate = simpleDateFormat.parse("20/12/2013 00:00");
+			Date outDate = simpleDateFormat.parse("28/12/2013 00:00");
 			Date date = simpleDateFormat.parse(s);
 
 			if (date.compareTo(outDate) < 0) {
